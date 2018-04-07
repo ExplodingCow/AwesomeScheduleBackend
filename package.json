@@ -1,0 +1,20 @@
+{
+  "name": "aputimetablebackend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "new.js",
+  "scripts": {
+    "start": "node new.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "adm-zip": "^0.4.7",
+    "download-file": "^0.1.5",
+    "extract-zip": "^1.6.6",
+    "request": "^2.85.0",
+    "unzip": "^0.1.11",
+    "xml2js": "^0.4.19",
+    "yauzl": "^2.9.1"
+  }
+}
