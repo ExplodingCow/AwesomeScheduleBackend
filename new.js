@@ -33,7 +33,7 @@ console.log("Running AwesomeSchedule Backend on port " + port);
 //http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip
 function downloadZIPFile() {
     console.log("Start Download!");
-    var url = "https://www.colorado.edu/conflict/peace/download/peace_essay.ZIP";
+    var url = "http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip";
 
     var options = {
         directory: "./timetableXML/",
