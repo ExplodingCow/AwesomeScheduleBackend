@@ -33,6 +33,7 @@ console.log("Running AwesomeSchedule Backend on port " + port);
 //http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip
 function downloadZIPFile() {
     console.log("Start Download!");
+    /*
     var url = "http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip";
 
     var options = {
@@ -45,6 +46,22 @@ function downloadZIPFile() {
         if (err) throw err;
         console.log("meow");
     });
+    */
+    import Promise from "bluebird";
+    import cmd from "node-cmd";
+
+    const getAsync = Promise.promisify(cmd.get, {
+        multiArgs: true,
+        context: cmd
+    });
+
+    getAsync("wget http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip -P ./timetableXML/")
+        .then(data => {
+            console.log("cmd data", data);
+        })
+        .catch(err => {
+            console.log("cmd err", err);
+        });
 }
 
 function notifyConsole() {
