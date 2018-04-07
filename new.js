@@ -21,6 +21,9 @@ var port = process.env.PORT || 8080;
 var router = express.Router();
 var download = require("download-file");
 
+var Promise = require("bluebird")
+var cmd = require("node-cmd");
+
 router.get("/", function(req, res) {
     res.json({ message: "This is the API for AwesomeSchedule." });
 });
@@ -47,15 +50,15 @@ function downloadZIPFile() {
         console.log("meow");
     });
     */
-    import Promise from "bluebird";
-    import cmd from "node-cmd";
 
     const getAsync = Promise.promisify(cmd.get, {
         multiArgs: true,
         context: cmd
     });
 
-    getAsync("wget http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip -P ./timetableXML/")
+    getAsync(
+        "wget http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip -P ./timetableXML/"
+    )
         .then(data => {
             console.log("cmd data", data);
         })
