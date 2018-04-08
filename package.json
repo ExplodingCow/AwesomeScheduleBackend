@@ -15,10 +15,14 @@
     "download-file": "^0.1.5",
     "express": "*",
     "extract-zip": "^1.6.6",
+    "glob": "^7.1.2",
     "node-cmd": "^3.0.0",
+    "node-wget-promise": "^0.1.4",
     "request": "^2.85.0",
+    "request-progress": "^3.0.0",
     "unzip": "^0.1.11",
     "xml2js": "^0.4.19",
+    "xml2js-parser": "^1.1.1",
     "yauzl": "^2.9.1"
   }
 }

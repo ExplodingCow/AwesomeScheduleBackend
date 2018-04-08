@@ -8,10 +8,11 @@ var http = require("http");
 var exec = require("child_process").exec;
 var spawn = require("child_process").spawn;
 var request = require("request");
+var glob = require("glob");
 // unzip
-var yauzl = require("yauzl");
+var unzip = require("unzip");
 // XML2JS
-var parseString = require("xml2js").parseString;
+const parseString = require("xml2js-parser").parseString;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -20,8 +21,9 @@ var port = process.env.PORT || 8080;
 
 var router = express.Router();
 var download = require("download-file");
+var progress = require("request-progress");
 
-var Promise = require("bluebird")
+var Promise = require("bluebird");
 var cmd = require("node-cmd");
 
 router.get("/", function(req, res) {
@@ -35,106 +37,57 @@ console.log("Running AwesomeSchedule Backend on port " + port);
 
 //http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip
 function downloadZIPFile() {
-    console.log("Start Download!");
-    /*
-    var url = "http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip";
-
-    var options = {
-        directory: "./timetableXML/",
-        filename: "timetableXML.zip",
-        timeout: 90000
-    };
-
-    download(url, options, function(err) {
-        if (err) throw err;
-        console.log("meow");
-    });
-    */
-
-    const getAsync = Promise.promisify(cmd.get, {
-        multiArgs: true,
-        context: cmd
-    });
-
-    getAsync(
-        "wget http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip -P ./timetableXML/"
+    console.log("---- Downloading XML ZIP file from APU servers ----");
+    var wget = require("node-wget-promise");
+    wget(
+        "http://lms.apiit.edu.my/intake-timetable/download_timetable/timetableXML.zip"
     )
-        .then(data => {
-            console.log("cmd data", data);
+        .then(res => {
+            console.log(res);
+            return unzipFile();
+            console.log("Done!");
         })
         .catch(err => {
-            console.log("cmd err", err);
+            console.log(err);
+            console.log("Uh Oh! Failed to download the XML ZIP file from APU servers!");
         });
 }
 
-function notifyConsole() {
-    console.log("Download Complete!");
-    return unzipFile();
-}
-
 function unzipFile() {
-    yauzl.open(
-        "./timetableXML/timetableXML.zip",
-        { lazyEntries: true },
-        function(err, zipfile) {
-            if (err) throw err;
-            zipfile.readEntry();
-            zipfile.on("entry", function(entry) {
-                if (/\/$/.test(entry.fileName)) {
-                    // Directory file names end with '/'.
-                    // Note that entires for directories themselves are optional.
-                    // An entry's fileName implicitly requires its parent directories to exist.
-                    zipfile.readEntry();
-                } else {
-                    // file entry
-                    zipfile.openReadStream(entry, function(err, readStream) {
-                        if (err) throw err;
-                        readStream.on("end", function() {
-                            zipfile.readEntry();
-                        });
-                        readStream.pipe(somewhere);
-                    });
-                }
-            });
-        }
-    );
+    console.log("---- Start Unzip of XML ZIP file ----");
+    var inputFileName = "./timetableXML.zip";
+    var extractToDirectory = "./timetableXML/";
 
-    console.log("Done!");
-    return XML2JSON();
+    fs
+        .createReadStream(inputFileName)
+        .pipe(unzip.Extract({ path: extractToDirectory }));
+    setTimeout(checkFile, 3000);
 }
 
-async function XML2JSON() {
-    var sInputFile = "timetableXML/2018-04-16.xml";
-    var xml = await fs.readFileSync(sInputFile, "utf8");
+function checkFile() {
+    console.log("---- Obtaining the name of the XML file ----");
+    glob("./timetableXML/*.xml", function(er, files) {  
+    });
+    var locationOfFile = files[0]
+    setTimeout(XML2JSON, 9000);
+}
+
+function XML2JSON() {
+    console.log("Start XML2JSON");
+    var xml = fs.readFileSync(locationOfFile, "utf8");
     // Now Convert
-    await parseString(xml, function(err, result) {
-        var scheduleJSON = result;
+    parseString(xml, function(err, result) {
+        while (theJSON === undefined) {
+            var theJSON = result;
+            console.log(theJSON);
+        }
     });
     // END XML TO JSON CONVERSION
     // Add new schedule to database
-    console.log(scheduleJSON);
-    var requireXML2JSONConversion = false;
 }
 
-/*
 function runAll() {
-new Promise(function(fulfill, reject){
     downloadZIPFile()
-    fulfill(result);
-}).then(function(result){
-    return new Promise(function(fulfill, reject){
-        unzipFile()
-        fulfill(result);
-    });
-}).then(function(result){
-    return new Promise(function(fulfill, reject){
-        XML2JSON();
-        fulfill(result);
-    });
-}).then(function(result){
-    console.log(result)
-});
 }
-*/
 
-downloadZIPFile();
+runAll();
