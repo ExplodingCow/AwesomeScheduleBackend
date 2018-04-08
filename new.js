@@ -67,6 +67,7 @@ function unzipFile() {
 function checkFile() {
     console.log("---- Obtaining the name of the XML file ----");
     glob("./timetableXML/*.xml", function(er, files) {  
+        console.log(files[0])
         var locationOfFile = files[0]
     });
     setTimeout(XML2JSON, 9000);
