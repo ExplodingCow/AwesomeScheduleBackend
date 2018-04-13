@@ -31,15 +31,19 @@ app.listen(port);
 console.log("Running AwesomeSchedule Backend on port " + port + " 👌");
 
 function loadConfig() {
-    var config = JSON.parse(fs.readFileSync("data.json", "utf8"));
-    if (config.schedule.renewXMLZIP === true) {
+
+    // Load the files
+    global.config = JSON.parse(fs.readFileSync("data.json", "utf8"));
+    global.scheduleJSON = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
+    global.indexCache = JSON.parse(fs.readFileSync("index.json", "utf8"))
+
+    if (global.config.schedule.renewXMLZIP === true) {
         console.log("[AwesomeSchedule] Checking for schedule updates");
-        downloadZIPFile(config.schedule.savedSchedules[0].date); // pass on current version date
-    } else if (config.schedule.renewXMLZIP === false) {
+        downloadZIPFile(global.config.schedule.savedSchedules[global.config.schedule.savedSchedules.length - 1]); // pass on current version date
+    } else if (global.config.schedule.renewXMLZIP === false) {
         console.log(
             "[AwesomeSchedule] renewXMLZIP is set to *false*, therefore schedule will not be renewed."
         );
-        global.scheduleJSON = JSON.parse(fs.readFileSync("scheduleCache.json", "utf8"));
     }
 }
 
@@ -87,7 +91,7 @@ function checkFile(currentVersion) {
             console.log(
                 "[AwesomeSchedule] Looks like the schedule is still not updated. No further action will be taken."
             );
-        } else if (files[files.length - 1] != currentVersion + ".csv") {
+        } else if (files[files.length - 1] != "./timetableCSV/" + currentVersion + ".csv") {
             console.log(
                 "[AwesomeSchedule] There's a new schedule update! Updating now."
             );
@@ -103,7 +107,6 @@ function CSV2JSON(locationOfNewCSV) {
     var newVersionDate = locationOfNewCSV
         .replace("./timetableCSV/", "")
         .replace(".csv", "");
-    console.log(newVersionDate)
     var currentCSV = fs.readFileSync(locationOfNewCSV, "utf8");
     var fixCSV =
         "DATE,INTAKE_CODE,DATE,TIME,CAMPUS,ROOM,MODULE_CODE,LECTURER" +
@@ -114,12 +117,15 @@ function CSV2JSON(locationOfNewCSV) {
     csv()
         .fromFile(locationOfNewCSV)
         .on("end_parsed", function(jsonObj) {
-            global.scheduleJSON = JSON.parse(fs.readFileSync("scheduleCache.json", "utf8"));
             global.scheduleJSON[newVersionDate] = jsonObj
-            fs.writeFileSync("./timetableJSON/" + newVersionDate + ".json", "");
             fs.writeFileSync(
                 "./timetableJSON/" + newVersionDate + ".json",
                 JSON.stringify(jsonObj)
+            );
+            global.scheduleJSON[newVersionDate] = jsonObj
+            fs.writeFileSync(
+                "schedule.json",
+                JSON.stringify(global.scheduleJSON)
             );
         });
     setTimeout(function() {
@@ -159,29 +165,28 @@ function indexDB(newVersionDate) {
     var indexDBFileName = "./indexDB/" + newVersionDate + ".json";
     fs.writeFileSync(indexDBFileName, JSON.stringify(indexDB));
     global.indexCache[newVersionDate] = indexDB; // Set Global Index *
+    fs.writeFileSync("index.json", JSON.stringify(global.indexCache))
     console.log("[AwesomeSchedule] Database index constructed.");
-    return updateConfig();
+    return updateConfig(newVersionDate);
 }
 
 function updateConfig(newVersionDate) {
     console.log("[AwesomeSchedule] Updating the config file.");
-    var newConfig = JSON.parse(fs.readFileSync("data.json", "utf8"));
-    var newObject = { date: newVersionDate };
-    newConfig.schedule.savedSchedules.push(newObject);
+    global.config.schedule.savedSchedules.push(newVersionDate);
+    fs.writeFileSync("data.json", JSON.stringify(global.config))
     console.log("[AwesomeSchedule] Update Successful ✅");
 }
 
 loadConfig();
 
-function getSchedule() {
     router
     .route("/schedules/:date/:intake_code")
 
     .get(function(req, res) {
+        console.log("Query")
         var selectedIntake = req.params.intake_code;
         var selectedDate = req.params.date;
         var indexRange = global.indexCache[selectedDate][selectedIntake];
         var schedule = global.scheduleJSON[selectedDate].slice(indexRange[0], indexRange[1] + 1)
         res.json(schedule);
     });
-}
