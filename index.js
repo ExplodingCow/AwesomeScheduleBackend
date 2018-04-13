@@ -1,7 +1,6 @@
 var express = require("express");
 var app = express();
 var bodyParser = require("body-parser");
-const mongoose = require("mongoose");
 // fetch zip
 var fs = require("fs");
 var url = require("url");
