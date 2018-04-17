@@ -12,6 +12,7 @@ var glob = require("glob");
 var unzip = require("unzip");
 // XML2JS
 const parseString = require("xml2js-parser").parseString;
+var cron = require('node-cron');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -29,12 +30,17 @@ app.use("/api", router);
 app.listen(port);
 console.log("Running AwesomeSchedule Backend on port " + port + " 👌");
 
+cron.schedule('00 00 12 * * 1-7', function(){
+  console.log("[AwesomeSchedule] It's 12AM, executing loadConfig function.");
+});
+
 function loadConfig() {
 
     // Load the files
     global.config = JSON.parse(fs.readFileSync("data.json", "utf8"));
     global.scheduleJSON = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
     global.indexCache = JSON.parse(fs.readFileSync("index.json", "utf8"))
+    global.listOfIntakes = JSON.parse(fs.readFileSync("listOfIntakes.json", "utf8"))
 
     if (global.config.schedule.renewXMLZIP === true) {
         console.log("[AwesomeSchedule] Checking for schedule updates");
@@ -140,20 +146,20 @@ function indexDB(newVersionDate) {
     var indexDB = {};
     var firstPos;
     var lastPos;
+    var listOfIntakes = []
     var proceed = true;
     var intakeCode = currentCSV[0]["INTAKE_CODE"]; // first
     while (proceed === true) {
-        var firstPos = currentCSV
-            .map(function(e) {
+        var firstPos = currentCSV.map(function(e) {
                 return e.INTAKE_CODE;
-            })
-            .indexOf(intakeCode);
+            }).indexOf(intakeCode);
         var lastPos = currentCSV
             .map(function(e) {
                 return e.INTAKE_CODE;
             })
             .lastIndexOf(intakeCode);
         indexDB[intakeCode] = [firstPos, lastPos];
+        listOfIntakes.push(intakeCode);
         var nextPos = lastPos + 1;
         if (nextPos == currentCSV.length) {
             var proceed = false;
@@ -166,7 +172,16 @@ function indexDB(newVersionDate) {
     global.indexCache[newVersionDate] = indexDB; // Set Global Index *
     fs.writeFileSync("index.json", JSON.stringify(global.indexCache))
     console.log("[AwesomeSchedule] Database index constructed.");
-    return updateConfig(newVersionDate);
+    return genListOfIntakes(listOfIntakes, newVersionDate)
+    //return updateConfig(newVersionDate);
+}
+
+function genListOfIntakes(listOfIntakes, newVersionDate) {
+    console.log("[AwesomeSchedule] Generating a list of intakes.")
+    var listOfIntakesFile = 'listOfIntakes.json'
+    global.listOfIntakes = listOfIntakes
+    fs.writeFileSync(listOfIntakesFile, JSON.stringify(listOfIntakes));
+    return updateConfig(newVersionDate)
 }
 
 function updateConfig(newVersionDate) {
@@ -178,13 +193,14 @@ function updateConfig(newVersionDate) {
 
 loadConfig();
 
+// List classes
     router
     .route("/schedules/:date/:intake_code")
 
     .get(function(req, res) {
-        console.log("Query")
         var selectedIntake = req.params.intake_code;
         var selectedDate = req.params.date;
+        console.log("Query for " + selectedIntake + " for " + selectedDate)
         if (global.indexCache[selectedDate] === undefined) {
             res.json({ message: "Date not in database"})
         }
@@ -197,3 +213,8 @@ loadConfig();
         res.json(schedule);
         }
     });
+
+// List intakes currently available
+    router.route("/intakes/list").get(function(req, res) {
+        res.json(global.listOfIntakes)
+    })

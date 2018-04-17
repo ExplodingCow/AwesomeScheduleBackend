@@ -16,6 +16,7 @@
     "express": "*",
     "extract-zip": "^1.6.6",
     "glob": "^7.1.2",
+    "node-cron": "^1.2.1",
     "node-wget-promise": "^0.1.4",
     "request": "^2.85.0",
     "request-progress": "^3.0.0",
