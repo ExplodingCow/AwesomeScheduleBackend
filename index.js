@@ -14,6 +14,12 @@ var unzip = require("unzip");
 const parseString = require("xml2js-parser").parseString;
 var cron = require('node-cron');
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -26,14 +32,6 @@ router.get("/", function(req, res) {
 });
 
 app.use("/api", router);
-
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", '*');
-    res.header("Access-Control-Allow-Credentials", true);
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-    res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
-    next();
-});
 
 app.listen(port);
 console.log("Running AwesomeSchedule Backend on port " + port + " 👌");
