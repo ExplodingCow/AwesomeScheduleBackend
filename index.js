@@ -208,10 +208,10 @@ loadConfig();
         var selectedDate = req.params.date;
         console.log("Query for " + selectedIntake + " for " + selectedDate)
         if (global.indexCache[selectedDate] === undefined) {
-            res.json({ message: "Date not in database"})
+            res.status(404).json({ error: "Date not in database"})
         }
         else if (global.indexCache[selectedDate][selectedIntake] === undefined) {
-            res.json({ message: "Intake not found in database"})
+            res.status(404).json({ error: "Intake not found in database"})
         }
         else {
         var indexRange = global.indexCache[selectedDate][selectedIntake];
