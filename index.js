@@ -12,7 +12,6 @@ var glob = require("glob");
 var unzip = require("unzip");
 // XML2JS
 const parseString = require("xml2js-parser").parseString;
-var cron = require('node-cron');
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -36,9 +35,9 @@ app.use("/api", router);
 app.listen(port);
 console.log("Running AwesomeSchedule Backend on port " + port + " 👌");
 
-cron.schedule('00 00 12 * * 1-7', function(){
-  console.log("[AwesomeSchedule] It's 12AM, executing loadConfig function.");
-});
+setInterval(function() {
+    loadConfig()
+}, 86400000); // every day
 
 function loadConfig() {
 
